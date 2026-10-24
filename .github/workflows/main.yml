@@ -22,7 +22,17 @@ jobs:
 
       - name: Build
         run: cmake --build build --config Release --parallel
+      - name: Inspect build output
+        shell: pwsh
+        run: |
+          Write-Host "=== VST3 files ==="
+          Get-ChildItem -Path build -Recurse -File |
+            Where-Object { $_.FullName -match '\.vst3($|\\)' } |
+            Select-Object FullName
 
+          Write-Host "=== Build directories ==="
+          Get-ChildItem -Path build -Recurse -Directory |
+            Select-Object FullName
       - name: Collect plugin
         shell: pwsh
         run: |
