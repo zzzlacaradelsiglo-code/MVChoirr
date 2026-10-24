@@ -1,0 +1,39 @@
+
+name: Build MV CHOIR LAB
+
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup MSVC
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
+
+      - name: Configure
+        run: cmake -B build -G "Ninja Multi-Config"
+
+      - name: Build
+        run: cmake --build build --config Release --parallel
+
+      - name: Collect plugin
+        shell: pwsh
+        run: |
+          $plugin = Get-ChildItem -Path build -Recurse -Directory -Filter "*.vst3" | Select-Object -First 1
+          if (-not $plugin) {
+            throw "No se encontró el plugin VST3 compilado."
+          }
+          New-Item -ItemType Directory -Force -Path dist | Out-Null
+          Copy-Item -Path $plugin.FullName -Destination dist -Recurse
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: MV-CHOIR-LAB-Windows
+          path: dist
